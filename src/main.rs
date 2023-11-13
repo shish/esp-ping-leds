@@ -5,6 +5,9 @@ use esp_idf_svc::{
     wifi::{AuthMethod, BlockingWifi, ClientConfiguration, Configuration, EspWifi},
 };
 use esp_idf_sys as _;
+use smart_leds::hsv::{hsv2rgb, Hsv};
+use smart_leds::SmartLedsWrite;
+use ws2812_esp32_rmt_driver::Ws2812Esp32Rmt;
 
 const WIFI_SSID: &str = "Wokwi-GUEST";
 const WIFI_PASS: &str = "";
@@ -46,23 +49,18 @@ fn fallible_main() -> anyhow::Result<()> {
         connect_wifi(&mut wifi, WIFI_SSID, WIFI_PASS)?;
     }
 
-    use smart_leds::hsv::{hsv2rgb, Hsv};
-    use smart_leds::SmartLedsWrite;
-    use ws2812_esp32_rmt_driver::Ws2812Esp32Rmt;
     let mut ws2812 = Ws2812Esp32Rmt::new(0, 9)?;
-    //let mut ws2812_ = Ws2812Esp32Rmt::new(1, 9)?;
 
-    let mut hue = 0; // unsafe { esp_random() } as u8;
+    let mut hue: u8 = 0; // unsafe { esp_random() } as u8;
     loop {
-        // print!(".");
-        let pixels = std::iter::repeat(hsv2rgb(Hsv {
-            hue,
-            sat: 255,
-            val: 88,
-        }))
-        .take(25);
-        ws2812.write(pixels.clone())?;
-        //ws2812_.write(pixels)?;
+        let pixels = (0..16).map(|n| {
+            hsv2rgb(Hsv {
+                hue: hue.wrapping_add(n * 8),
+                sat: 255,
+                val: 88,
+            })
+        });
+        ws2812.write(pixels)?;
 
         FreeRtos::delay_ms(100);
 
