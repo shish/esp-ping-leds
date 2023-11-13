@@ -21,13 +21,6 @@
             "attrs": {
                 "pixels": "16"
             }
-        },
-        {
-            "type": "wokwi-logic-analyzer",
-            "id": "logic1",
-            "top": 192.35,
-            "left": 278.4,
-            "attrs": {}
         }
     ],
     "connections": [
@@ -70,33 +63,6 @@
                 "v-57.6",
                 "h134.4",
                 "v67.2"
-            ]
-        ],
-        [
-            "esp:8",
-            "logic1:D1",
-            "green",
-            [
-                "h35.98",
-                "v-38.4"
-            ]
-        ],
-        [
-            "esp:9",
-            "logic1:D0",
-            "green",
-            [
-                "h26.38",
-                "v-38.4"
-            ]
-        ],
-        [
-            "esp:GND.8",
-            "logic1:GND",
-            "black",
-            [
-                "h35.98",
-                "v19.2"
             ]
         ]
     ],
