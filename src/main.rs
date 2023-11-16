@@ -73,34 +73,11 @@ fn connect_wifi(
     log::info!("Wifi starting, target: {}...", ssid);
     wifi.start()?;
 
-    log::info!("Scanning...");
-    let (auth_method, channel) = match wifi.scan() {
-        Ok(aps) => {
-            aps.iter().for_each(|i| {
-                println!(
-                    "AP: {} {:?} {} {} {:?}",
-                    i.ssid, i.bssid, i.channel, i.signal_strength, i.auth_method
-                )
-            });
-            let ours = aps.into_iter().find(|a| a.ssid == ssid);
-            if let Some(ours) = ours {
-                log::debug!("Found AP {} on channel {}", ssid, ours.channel);
-                (ours.auth_method, Some(ours.channel))
-            } else {
-                log::debug!("Configured AP {} not found", ssid);
-                (AuthMethod::WPA2Personal, None)
-            }
-        }
-        Err(e) => {
-            log::error!("Wifi scan failed: {}", e);
-            (AuthMethod::WPA2Personal, None)
-        }
-    };
+    let auth_method = scan_wifi(wifi, ssid, password)?;
     let client_config = esp_idf_svc::wifi::ClientConfiguration {
         ssid: ssid.into(),
         auth_method,
         password: password.into(),
-        channel,
         ..Default::default()
     };
     let wifi_configuration = esp_idf_svc::wifi::Configuration::Client(client_config);
@@ -111,10 +88,47 @@ fn connect_wifi(
 
     log::info!("Waiting for DHCP...");
     wifi.wait_netif_up()?;
+
+    log::info!("Print DHCP info...");
     let ip_info = wifi.wifi().sta_netif().get_ip_info()?;
     log::info!("Wifi DHCP info: {:?}", ip_info);
 
     Ok(())
+}
+
+fn scan_wifi(
+    wifi: &mut BlockingWifi<EspWifi<'static>>,
+    ssid: &str,
+    password: &str,
+) -> anyhow::Result<AuthMethod> {
+    log::info!("Scanning...");
+    let guessed_auth = if password.is_empty() {
+        AuthMethod::None
+    } else {
+        AuthMethod::WPA2Personal
+    };
+    match wifi.scan() {
+        Ok(aps) => {
+            aps.iter().for_each(|i| {
+                println!(
+                    "AP: {} {:?} {} {} {:?}",
+                    i.ssid, i.bssid, i.channel, i.signal_strength, i.auth_method
+                )
+            });
+            let ours = aps.into_iter().find(|a| a.ssid == ssid);
+            if let Some(ours) = ours {
+                log::debug!("Found AP {} on channel {}", ssid, ours.channel);
+                Ok(ours.auth_method)
+            } else {
+                log::debug!("Configured AP {} not found", ssid);
+                Ok(guessed_auth)
+            }
+        }
+        Err(e) => {
+            log::error!("Wifi scan failed: {}", e);
+            Ok(guessed_auth)
+        }
+    }
 }
 
 fn main_loop(mut ws2812: Ws2812Esp32Rmt) -> anyhow::Result<()> {
@@ -133,7 +147,6 @@ fn main_loop(mut ws2812: Ws2812Esp32Rmt) -> anyhow::Result<()> {
         if samples.len() > LED_COUNT as usize {
             samples.pop_back();
         }
-        log::info!("Samples: {:?}", samples);
         let pixels = samples
             .clone()
             .into_iter()

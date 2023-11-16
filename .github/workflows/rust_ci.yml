@@ -35,5 +35,7 @@ jobs:
         with:
           toolchain: nightly
           components: rust-src
+      - name: Install extras
+        run: cargo install ldproxy && rustup component add rustfmt clippy
       - name: Run command
         run: cargo ${{ matrix.action.command }} ${{ matrix.action.args }}
