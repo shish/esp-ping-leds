@@ -12,8 +12,9 @@ use ws2812_esp32_rmt_driver::Ws2812Esp32Rmt;
 
 const WIFI_SSID: Option<&str> = std::option_env!("WIFI_SSID");
 const WIFI_PASS: Option<&str> = std::option_env!("WIFI_PASS");
-const HOST: Ipv4Addr = Ipv4Addr::new(8, 8, 8, 8);
-const MAX_HEALTHY_DURATION: Duration = Duration::from_millis(200);
+// const HOST: Ipv4Addr = Ipv4Addr::new(8, 8, 8, 8);
+const HOST: Ipv4Addr = Ipv4Addr::new(192, 168, 1, 1);
+const MAX_HEALTHY_DURATION: Duration = Duration::from_millis(500);
 const LED_STRIP_DURATION: Duration = Duration::from_secs(60);
 const LED_COUNT: u32 = 16;
 const RESTART_SECONDS: u32 = 3;
