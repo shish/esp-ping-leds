@@ -1,7 +1,7 @@
 [toolchain]
 # xtensa
-channel = "esp"
+#channel = "esp"
 
 # risc-v
-#channel = "nightly"
-#components = ["rust-src"]
+channel = "nightly"
+components = ["rust-src"]

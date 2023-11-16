@@ -1,7 +1,7 @@
 [build]
 #target = "xtensa-esp8266-none-elf"
-target = "xtensa-esp32-espidf"
-#target = "riscv32imc-esp-espidf"
+#target = "xtensa-esp32-espidf"
+target = "riscv32imc-esp-espidf"
 
 [target.riscv32imc-esp-espidf]
 linker = "ldproxy"
@@ -28,7 +28,7 @@ build-std = ["std", "panic_abort"]
 
 [env]
 #MCU = "esp8266"
-MCU = "esp32"
-#MCU = "esp32c3"
+#MCU = "esp32"
+MCU = "esp32c3"
 # Note: this variable is not used by the pio builder (`cargo build --features pio`)
 ESP_IDF_VERSION = "v5.1.1"

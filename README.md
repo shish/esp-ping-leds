@@ -13,3 +13,10 @@ Once the devcontainer is opened:
 * `WIFI_SSID=Foo WIFI_PASS=Bar PING_HOST=1.1.1.1 cargo build` to do a build with wifi credentials and a specific host to ping (by default it will ping the local gateway)
 * `scp` to get the binary from the remote server onto my laptop
 * `espflash flash --monitor /tmp/esp-ping-leds --port /dev/cu.usbmodem101` to flash to a device (port depends on what board is being used - if that port doesn't work for you, drop the flag and espflash will scan to find all available ports)
+
+
+To change the target board:
+===========================
+* `.devcontainer/devcontainer.json` - build/args/ESP_BOARD
+* `rust-toolchain.toml` - `channel="esp"` for xtensa boards, `channel="nightly"` + `components = ["rust-src"]` for risc-v boards
+* `.cargo/config.toml` - `build.target` and `board.MCU`
