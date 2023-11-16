@@ -604,8 +604,7 @@ dependencies = [
 [[package]]
 name = "esp-idf-svc"
 version = "0.47.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6e2bd20db9af5a3b96823b38f39e6aafcc1bcfa3e5e7d9a0777101f1f301eba5"
+source = "git+https://github.com/shish/esp-idf-svc/?branch=patch-1#5a0c3d173dbf9f69b0aff141b9d73704d26fdbe6"
 dependencies = [
  "embassy-futures",
  "embassy-sync",

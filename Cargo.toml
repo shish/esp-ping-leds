@@ -29,7 +29,7 @@ embassy = [
 
 [dependencies]
 log = { version = "0.4", default-features = false }
-esp-idf-svc = { version = "0.47.3", default-features = false }
+esp-idf-svc = { version = "0.47.3", default-features = false, git = "https://github.com/shish/esp-idf-svc/", branch = "patch-1" }
 anyhow = "1.0.75"
 smart-leds = "*"
 ws2812-esp32-rmt-driver = "*"
