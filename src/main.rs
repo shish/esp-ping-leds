@@ -11,8 +11,8 @@ use smart_leds::RGB;
 use std::{collections::VecDeque, time::Duration};
 use ws2812_esp32_rmt_driver::Ws2812Esp32Rmt;
 
-const WIFI_SSID: &str = "Wokwi-GUEST";
-const WIFI_PASS: &str = "";
+const WIFI_SSID: Option<&str> = std::option_env!("WIFI_SSID");
+const WIFI_PASS: Option<&str> = std::option_env!("WIFI_PASS");
 const HOST: Ipv4Addr = Ipv4Addr::new(8, 8, 8, 8);
 const MAX_HEALTHY_DURATION: Duration = Duration::from_millis(200);
 const LED_STRIP_DURATION: Duration = Duration::from_secs(60);
@@ -33,14 +33,20 @@ fn main() -> anyhow::Result<()> {
     let sysloop = EspSystemEventLoop::take()?;
     log::info!("Get NVS partition");
     let nvs = EspDefaultNvsPartition::take()?;
-    log::info!("About to initialize WiFi (SSID: {})", WIFI_SSID);
+
+    let wifi_ssid = WIFI_SSID.unwrap_or("Wokwi-GUEST");
+    let wifi_pass = WIFI_PASS.unwrap_or("");
+    log::info!("About to initialize WiFi (SSID: {})", wifi_ssid);
     let mut wifi = BlockingWifi::wrap(
         EspWifi::new(peripherals.modem, sysloop.clone(), Some(nvs))?,
         sysloop,
     )?;
 
     loop {
-        match connect_wifi(&mut wifi, WIFI_SSID, WIFI_PASS) {
+        let mut ws2812 = Ws2812Esp32Rmt::new(0, 6)?;
+        ws2812.write((0..LED_COUNT).map(|_| RGB::new(0, 0, 200)))?;
+
+        match connect_wifi(&mut wifi, wifi_ssid, wifi_pass) {
             Ok(_) => log::info!("Wifi ok"),
             Err(e) => {
                 log::error!("Wifi connection failed: {}", e);
@@ -62,24 +68,48 @@ fn main() -> anyhow::Result<()> {
 
 fn connect_wifi(
     wifi: &mut BlockingWifi<EspWifi<'static>>,
-    wifi_ssid: &str,
-    wifi_password: &str,
+    ssid: &str,
+    password: &str,
 ) -> anyhow::Result<()> {
+    log::info!("Wifi starting...");
+    wifi.start()?;
+
+    log::info!("Scanning...");
+    let ap_infos = wifi.scan()?;
+    ap_infos.iter().for_each(|i| {
+        println!(
+            "AP: {} {:?} {} {} {:?}",
+            i.ssid, i.bssid, i.channel, i.signal_strength, i.auth_method
+        )
+    });
+    let ours = ap_infos.into_iter().find(|a| a.ssid == ssid);
+    let (auth_method, channel) = if let Some(ours) = ours {
+        log::debug!("Found AP {} on channel {}", ssid, ours.channel);
+        (ours.auth_method, Some(ours.channel))
+    } else {
+        log::debug!("Configured AP {} not found", ssid);
+        (AuthMethod::WPA2Personal, None)
+    };
     let client_config = esp_idf_svc::wifi::ClientConfiguration {
-        ssid: wifi_ssid.into(),
-        bssid: None,
-        auth_method: AuthMethod::WPA2Personal,
-        password: wifi_password.into(),
-        channel: None,
+        ssid: ssid.into(),
+        auth_method,
+        password: password.into(),
+        channel,
+        ..Default::default()
     };
     let wifi_configuration = esp_idf_svc::wifi::Configuration::Client(client_config);
     wifi.set_configuration(&wifi_configuration)?;
-    wifi.start()?;
-    log::info!("Wifi started");
+
+    log::info!("Connecting...");
     wifi.connect()?;
-    log::info!("Wifi connected");
-    wifi.wait_netif_up()?;
+
     log::info!("Wifi netif up");
+    wifi.wait_netif_up()?;
+
+    log::info!("Wifi OK!");
+
+    let ip_info = wifi.wifi().sta_netif().get_ip_info()?;
+    log::info!("Wifi DHCP info: {:?}", ip_info);
     Ok(())
 }
 
