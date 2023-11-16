@@ -74,20 +74,27 @@ fn connect_wifi(
     wifi.start()?;
 
     log::info!("Scanning...");
-    let ap_infos = wifi.scan()?;
-    ap_infos.iter().for_each(|i| {
-        println!(
-            "AP: {} {:?} {} {} {:?}",
-            i.ssid, i.bssid, i.channel, i.signal_strength, i.auth_method
-        )
-    });
-    let ours = ap_infos.into_iter().find(|a| a.ssid == ssid);
-    let (auth_method, channel) = if let Some(ours) = ours {
-        log::debug!("Found AP {} on channel {}", ssid, ours.channel);
-        (ours.auth_method, Some(ours.channel))
-    } else {
-        log::debug!("Configured AP {} not found", ssid);
-        (AuthMethod::WPA2Personal, None)
+    let (auth_method, channel) = match wifi.scan() {
+        Ok(aps) => {
+            aps.iter().for_each(|i| {
+                println!(
+                    "AP: {} {:?} {} {} {:?}",
+                    i.ssid, i.bssid, i.channel, i.signal_strength, i.auth_method
+                )
+            });
+            let ours = aps.into_iter().find(|a| a.ssid == ssid);
+            if let Some(ours) = ours {
+                log::debug!("Found AP {} on channel {}", ssid, ours.channel);
+                (ours.auth_method, Some(ours.channel))
+            } else {
+                log::debug!("Configured AP {} not found", ssid);
+                (AuthMethod::WPA2Personal, None)
+            }
+        }
+        Err(e) => {
+            log::error!("Wifi scan failed: {}", e);
+            (AuthMethod::WPA2Personal, None)
+        }
     };
     let client_config = esp_idf_svc::wifi::ClientConfiguration {
         ssid: ssid.into(),
