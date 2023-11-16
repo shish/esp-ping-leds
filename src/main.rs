@@ -212,16 +212,25 @@ mod test_ms2rgb {
 
     #[test]
     fn fast_returns_green() {
-        assert_eq!(ms2rgb(Some(0), TEST_MAX), RGB::new(0, 255, 0));
+        assert_eq!(
+            ms2rgb(Some(Duration::from_millis(0)), TEST_MAX),
+            RGB::new(0, 255, 0)
+        );
     }
 
     #[test]
     fn slow_returns_yellow() {
-        assert_eq!(ms2rgb(Some(50), TEST_MAX), RGB::new(128, 255, 0));
+        assert_eq!(
+            ms2rgb(Some(Duration::from_millis(50)), TEST_MAX),
+            RGB::new(128, 255, 0)
+        );
     }
 
     #[test]
     fn very_slow_returns_red() {
-        assert_eq!(ms2rgb(Some(200), TEST_MAX), RGB::new(127, 0, 0));
+        assert_eq!(
+            ms2rgb(Some(Duration::from_millis(200)), TEST_MAX),
+            RGB::new(127, 0, 0)
+        );
     }
 }
