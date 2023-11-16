@@ -3,7 +3,7 @@ use esp_idf_svc::{
     eventloop::EspSystemEventLoop,
     ipv4::Ipv4Addr,
     nvs::EspDefaultNvsPartition,
-    wifi::{AuthMethod, BlockingWifi, EspWifi},
+    wifi::{AuthMethod, EspWifi},
 };
 use esp_idf_sys as _;
 use smart_leds::SmartLedsWrite;
@@ -35,10 +35,7 @@ fn main() -> anyhow::Result<()> {
     log::info!("Get NVS partition");
     let nvs = EspDefaultNvsPartition::take()?;
 
-    let mut wifi = BlockingWifi::wrap(
-        EspWifi::new(peripherals.modem, sysloop.clone(), Some(nvs))?,
-        sysloop,
-    )?;
+    let mut wifi = EspWifi::new(peripherals.modem, sysloop.clone(), Some(nvs))?;
     let wifi_ssid = WIFI_SSID.unwrap_or("Wokwi-GUEST");
     let wifi_pass = WIFI_PASS.unwrap_or("");
 
@@ -65,39 +62,37 @@ fn main() -> anyhow::Result<()> {
     }
 }
 
-fn connect_wifi(
-    wifi: &mut BlockingWifi<EspWifi<'static>>,
-    ssid: &str,
-    password: &str,
-) -> anyhow::Result<()> {
+fn connect_wifi(wifi: &mut EspWifi<'static>, ssid: &str, password: &str) -> anyhow::Result<()> {
     log::info!("Wifi starting, target: {}...", ssid);
     wifi.start()?;
 
     let auth_method = scan_wifi(wifi, ssid, password)?;
-    let client_config = esp_idf_svc::wifi::ClientConfiguration {
-        ssid: ssid.into(),
-        auth_method,
-        password: password.into(),
-        ..Default::default()
-    };
-    let wifi_configuration = esp_idf_svc::wifi::Configuration::Client(client_config);
+    let wifi_configuration =
+        esp_idf_svc::wifi::Configuration::Client(esp_idf_svc::wifi::ClientConfiguration {
+            ssid: ssid.into(),
+            auth_method,
+            password: password.into(),
+            ..Default::default()
+        });
     wifi.set_configuration(&wifi_configuration)?;
 
-    log::info!("Connecting...");
     wifi.connect()?;
-
-    log::info!("Waiting for DHCP...");
-    wifi.wait_netif_up()?;
-
-    log::info!("Print DHCP info...");
-    let ip_info = wifi.wifi().sta_netif().get_ip_info()?;
-    log::info!("Wifi DHCP info: {:?}", ip_info);
+    log::info!("Waiting for station {:?}", wifi.get_configuration()?);
+    while !wifi.is_connected()? {
+        FreeRtos::delay_ms(1000);
+    }
+    log::info!("Got station {:?}", wifi.get_configuration()?);
+    log::info!("Waiting for IP");
+    while wifi.sta_netif().get_ip_info()?.ip.is_unspecified() {
+        FreeRtos::delay_ms(1000);
+    }
+    log::info!("IP info: {:?}", wifi.sta_netif().get_ip_info()?);
 
     Ok(())
 }
 
 fn scan_wifi(
-    wifi: &mut BlockingWifi<EspWifi<'static>>,
+    wifi: &mut EspWifi<'static>,
     ssid: &str,
     password: &str,
 ) -> anyhow::Result<AuthMethod> {
