@@ -39,9 +39,9 @@ fn main() -> anyhow::Result<()> {
     let wifi_pass = WIFI_PASS.unwrap_or("");
 
     let mut ws2812 = Ws2812Esp32Rmt::new(0, 6)?;
-    ws2812.write((0..LED_COUNT).map(|_| RGB::new(0, 0, 200)))?;
+    debug_lights(&mut ws2812, 1)?;
 
-    match connect_wifi(&mut wifi, wifi_ssid, wifi_pass) {
+    match connect_wifi(&mut ws2812, &mut wifi, wifi_ssid, wifi_pass) {
         Ok(_) => log::info!("Wifi ok"),
         Err(e) => {
             log::error!("Wifi connection failed: {}", e);
@@ -66,8 +66,25 @@ fn main() -> anyhow::Result<()> {
     }
 }
 
-fn connect_wifi(wifi: &mut EspWifi<'static>, ssid: &str, password: &str) -> anyhow::Result<()> {
+fn debug_lights(ws2812: &mut Ws2812Esp32Rmt, stage: u32) -> anyhow::Result<()> {
+    ws2812.write((0..LED_COUNT).map(|n| {
+        if n < stage {
+            RGB::new(255, 105, 180)
+        } else {
+            RGB::new(0, 0, 200)
+        }
+    }))?;
+    Ok(())
+}
+
+fn connect_wifi(
+    ws2812: &mut Ws2812Esp32Rmt,
+    wifi: &mut EspWifi<'static>,
+    ssid: &str,
+    password: &str,
+) -> anyhow::Result<()> {
     log::info!("Wifi starting, target: {}...", ssid);
+    debug_lights(ws2812, 2)?;
     wifi.start()?;
 
     let auth_method = scan_wifi(wifi, ssid, password)?;
@@ -82,16 +99,20 @@ fn connect_wifi(wifi: &mut EspWifi<'static>, ssid: &str, password: &str) -> anyh
 
     wifi.connect()?;
     log::info!("Waiting for station {:?}", wifi.get_configuration()?);
+    debug_lights(ws2812, 3)?;
     while !wifi.is_connected()? {
         FreeRtos::delay_ms(1000);
     }
     log::info!("Got station {:?}", wifi.get_configuration()?);
+
     log::info!("Waiting for IP");
+    debug_lights(ws2812, 4)?;
     while wifi.sta_netif().get_ip_info()?.ip.is_unspecified() {
         FreeRtos::delay_ms(1000);
     }
     log::info!("IP info: {:?}", wifi.sta_netif().get_ip_info()?);
 
+    debug_lights(ws2812, 5)?;
     Ok(())
 }
 
