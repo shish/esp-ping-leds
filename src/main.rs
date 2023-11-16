@@ -12,8 +12,7 @@ use ws2812_esp32_rmt_driver::Ws2812Esp32Rmt;
 
 const WIFI_SSID: Option<&str> = std::option_env!("WIFI_SSID");
 const WIFI_PASS: Option<&str> = std::option_env!("WIFI_PASS");
-// const HOST: Ipv4Addr = Ipv4Addr::new(8, 8, 8, 8);
-const HOST: Ipv4Addr = Ipv4Addr::new(192, 168, 1, 1);
+const PING_HOST: Option<&str> = std::option_env!("PING_HOST");
 const MAX_HEALTHY_DURATION: Duration = Duration::from_millis(500);
 const LED_STRIP_DURATION: Duration = Duration::from_secs(60);
 const LED_COUNT: u32 = 16;
@@ -51,7 +50,12 @@ fn main() -> anyhow::Result<()> {
             unsafe { esp_idf_svc::sys::esp_restart() };
         }
     }
-    match main_loop(ws2812) {
+    let ping_host = if PING_HOST.is_some() {
+        PING_HOST.unwrap().parse::<Ipv4Addr>()?
+    } else {
+        wifi.sta_netif().get_ip_info()?.subnet.gateway
+    };
+    match main_loop(ping_host, ws2812) {
         Ok(_) => unreachable!(),
         Err(e) => {
             log::error!("Major Error: {}", e);
@@ -126,7 +130,7 @@ fn scan_wifi(
     }
 }
 
-fn main_loop(mut ws2812: Ws2812Esp32Rmt) -> anyhow::Result<()> {
+fn main_loop(ping_host: Ipv4Addr, mut ws2812: Ws2812Esp32Rmt) -> anyhow::Result<()> {
     log::info!("Main loop...");
     let time_per_led = LED_STRIP_DURATION / LED_COUNT;
     let mut samples: VecDeque<Option<Duration>> = VecDeque::with_capacity((LED_COUNT + 1) as usize);
@@ -135,7 +139,7 @@ fn main_loop(mut ws2812: Ws2812Esp32Rmt) -> anyhow::Result<()> {
         // let sample = Some(Duration::from_millis(
         //     unsafe { esp_idf_sys::esp_random() % 250 } as u64,
         // ));
-        let sample = ping(HOST)?;
+        let sample = ping(ping_host)?;
         log::info!("Sample: {:?}", sample);
 
         samples.push_front(sample);
