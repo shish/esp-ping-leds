@@ -1,11 +1,10 @@
-use esp_idf_hal::{delay::FreeRtos, peripherals::Peripherals};
 use esp_idf_svc::{
     eventloop::EspSystemEventLoop,
+    hal::{delay::FreeRtos, peripherals::Peripherals},
     ipv4::Ipv4Addr,
     nvs::EspDefaultNvsPartition,
     wifi::{AuthMethod, EspWifi},
 };
-use esp_idf_sys as _;
 use smart_leds::SmartLedsWrite;
 use smart_leds::RGB;
 use std::{collections::VecDeque, time::Duration};
@@ -48,7 +47,7 @@ fn main() -> anyhow::Result<()> {
             log::error!("Wifi connection failed: {}", e);
             log::info!("Restarting in {}s...", RESTART_SECONDS);
             FreeRtos::delay_ms(RESTART_SECONDS * 1000);
-            unsafe { esp_idf_sys::esp_restart() };
+            unsafe { esp_idf_svc::sys::esp_restart() };
         }
     }
     match main_loop(ws2812) {
@@ -57,7 +56,7 @@ fn main() -> anyhow::Result<()> {
             log::error!("Major Error: {}", e);
             log::info!("Restarting in {}s...", RESTART_SECONDS);
             FreeRtos::delay_ms(RESTART_SECONDS * 1000);
-            unsafe { esp_idf_sys::esp_restart() };
+            unsafe { esp_idf_svc::sys::esp_restart() };
         }
     }
 }

@@ -14,7 +14,7 @@ debug = true    # Symbols are nice and they don't increase the size on Flash
 opt-level = "z"
 
 [features]
-default = ["std", "embassy", "esp-idf-svc/native"]
+default = ["std", "embassy", "esp-idf-svc/native", "esp-idf-svc/binstart"]
 
 pio = ["esp-idf-svc/pio"]
 std = ["alloc", "esp-idf-svc/binstart", "esp-idf-svc/std"]
@@ -30,8 +30,6 @@ embassy = [
 [dependencies]
 log = { version = "0.4", default-features = false }
 esp-idf-svc = { version = "0.47.3", default-features = false }
-esp-idf-sys = { version = "0.33.2", features = ["binstart"] }
-esp-idf-hal = "0.42"
 anyhow = "1.0.75"
 smart-leds = "*"
 ws2812-esp32-rmt-driver = "*"

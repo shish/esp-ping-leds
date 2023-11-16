@@ -646,9 +646,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "embuild",
- "esp-idf-hal",
  "esp-idf-svc",
- "esp-idf-sys",
  "log",
  "smart-leds",
  "ws2812-esp32-rmt-driver",
