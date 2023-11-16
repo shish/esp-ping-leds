@@ -13,11 +13,11 @@ use ws2812_esp32_rmt_driver::Ws2812Esp32Rmt;
 const WIFI_SSID: Option<&str> = std::option_env!("WIFI_SSID");
 const WIFI_PASS: Option<&str> = std::option_env!("WIFI_PASS");
 const PING_HOST: Option<&str> = std::option_env!("PING_HOST");
-const MAX_HEALTHY_DURATION: Duration = Duration::from_millis(500);
+const MAX_HEALTHY_DURATION: Duration = Duration::from_millis(200);
 const LED_STRIP_DURATION: Duration = Duration::from_secs(60);
 const LED_COUNT: u32 = 16;
 const RESTART_SECONDS: u32 = 3;
-const LED_GPIO: u32 = 13; // 6 for C3 mini, wokwi, 13 for ESP-WROOM-32
+const LED_GPIO: u32 = 13; // 6 for C3 mini, wokwi, esp32-c3-devkit-rust-1; 13 for ESP-WROOM-32
 
 fn main() -> anyhow::Result<()> {
     // It is necessary to call this function once. Otherwise some patches to the runtime
