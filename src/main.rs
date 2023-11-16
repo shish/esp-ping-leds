@@ -34,13 +34,12 @@ fn main() -> anyhow::Result<()> {
     log::info!("Get NVS partition");
     let nvs = EspDefaultNvsPartition::take()?;
 
-    let wifi_ssid = WIFI_SSID.unwrap_or("Wokwi-GUEST");
-    let wifi_pass = WIFI_PASS.unwrap_or("");
-    log::info!("About to initialize WiFi (SSID: {})", wifi_ssid);
     let mut wifi = BlockingWifi::wrap(
         EspWifi::new(peripherals.modem, sysloop.clone(), Some(nvs))?,
         sysloop,
     )?;
+    let wifi_ssid = WIFI_SSID.unwrap_or("Wokwi-GUEST");
+    let wifi_pass = WIFI_PASS.unwrap_or("");
 
     loop {
         let mut ws2812 = Ws2812Esp32Rmt::new(0, 6)?;
@@ -71,7 +70,7 @@ fn connect_wifi(
     ssid: &str,
     password: &str,
 ) -> anyhow::Result<()> {
-    log::info!("Wifi starting...");
+    log::info!("Wifi starting, target: {}...", ssid);
     wifi.start()?;
 
     log::info!("Scanning...");
@@ -103,7 +102,7 @@ fn connect_wifi(
     log::info!("Connecting...");
     wifi.connect()?;
 
-    log::info!("Wifi netif up");
+    log::info!("Waiting for DHCP...");
     wifi.wait_netif_up()?;
 
     log::info!("Wifi OK!");
