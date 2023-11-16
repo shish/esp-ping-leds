@@ -17,6 +17,7 @@ const HOST: Ipv4Addr = Ipv4Addr::new(8, 8, 8, 8);
 const MAX_HEALTHY_DURATION: Duration = Duration::from_millis(200);
 const LED_STRIP_DURATION: Duration = Duration::from_secs(60);
 const LED_COUNT: u32 = 16;
+const RESTART_SECONDS: u32 = 3;
 
 fn main() -> anyhow::Result<()> {
     // It is necessary to call this function once. Otherwise some patches to the runtime
@@ -41,26 +42,25 @@ fn main() -> anyhow::Result<()> {
     let wifi_ssid = WIFI_SSID.unwrap_or("Wokwi-GUEST");
     let wifi_pass = WIFI_PASS.unwrap_or("");
 
-    loop {
-        let mut ws2812 = Ws2812Esp32Rmt::new(0, 6)?;
-        ws2812.write((0..LED_COUNT).map(|_| RGB::new(0, 0, 200)))?;
+    let mut ws2812 = Ws2812Esp32Rmt::new(0, 6)?;
+    ws2812.write((0..LED_COUNT).map(|_| RGB::new(0, 0, 200)))?;
 
-        match connect_wifi(&mut wifi, wifi_ssid, wifi_pass) {
-            Ok(_) => log::info!("Wifi ok"),
-            Err(e) => {
-                log::error!("Wifi connection failed: {}", e);
-                log::info!("Restarting in 10s...");
-                FreeRtos::delay_ms(10000);
-                continue;
-            }
+    match connect_wifi(&mut wifi, wifi_ssid, wifi_pass) {
+        Ok(_) => log::info!("Wifi ok"),
+        Err(e) => {
+            log::error!("Wifi connection failed: {}", e);
+            log::info!("Restarting in {}s...", RESTART_SECONDS);
+            FreeRtos::delay_ms(RESTART_SECONDS * 1000);
+            unsafe { esp_idf_sys::esp_restart() };
         }
-        match main_loop() {
-            Ok(_) => unreachable!(),
-            Err(e) => {
-                log::error!("Major Error: {}", e);
-                log::info!("Restarting in 10s...");
-                FreeRtos::delay_ms(10000);
-            }
+    }
+    match main_loop(ws2812) {
+        Ok(_) => unreachable!(),
+        Err(e) => {
+            log::error!("Major Error: {}", e);
+            log::info!("Restarting in {}s...", RESTART_SECONDS);
+            FreeRtos::delay_ms(RESTART_SECONDS * 1000);
+            unsafe { esp_idf_sys::esp_restart() };
         }
     }
 }
@@ -111,19 +111,16 @@ fn connect_wifi(
 
     log::info!("Waiting for DHCP...");
     wifi.wait_netif_up()?;
-
-    log::info!("Wifi OK!");
-
     let ip_info = wifi.wifi().sta_netif().get_ip_info()?;
     log::info!("Wifi DHCP info: {:?}", ip_info);
+
     Ok(())
 }
 
-fn main_loop() -> anyhow::Result<()> {
-    let mut ws2812 = Ws2812Esp32Rmt::new(0, 6)?;
+fn main_loop(mut ws2812: Ws2812Esp32Rmt) -> anyhow::Result<()> {
+    log::info!("Main loop...");
     let time_per_led = LED_STRIP_DURATION / LED_COUNT;
     let mut samples: VecDeque<Option<Duration>> = VecDeque::with_capacity((LED_COUNT + 1) as usize);
-
     loop {
         // let sample = Some(Duration::from_millis(42));
         // let sample = Some(Duration::from_millis(
@@ -136,6 +133,7 @@ fn main_loop() -> anyhow::Result<()> {
         if samples.len() > LED_COUNT as usize {
             samples.pop_back();
         }
+        log::info!("Samples: {:?}", samples);
         let pixels = samples
             .clone()
             .into_iter()
