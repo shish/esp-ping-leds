@@ -7,7 +7,7 @@
     "args": {
       "CONTAINER_USER": "esp",
       "CONTAINER_GROUP": "esp",
-      "ESP_BOARD": "esp32c3"
+      "ESP_BOARD": "esp32"
     }
   },
   "settings": {

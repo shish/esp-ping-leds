@@ -17,6 +17,7 @@ const MAX_HEALTHY_DURATION: Duration = Duration::from_millis(500);
 const LED_STRIP_DURATION: Duration = Duration::from_secs(60);
 const LED_COUNT: u32 = 16;
 const RESTART_SECONDS: u32 = 3;
+const LED_GPIO: u32 = 13; // 6 for C3 mini, wokwi, 13 for ESP-WROOM-32
 
 fn main() -> anyhow::Result<()> {
     // It is necessary to call this function once. Otherwise some patches to the runtime
@@ -34,11 +35,14 @@ fn main() -> anyhow::Result<()> {
     log::info!("Get NVS partition");
     let nvs = EspDefaultNvsPartition::take()?;
 
+    log::info!("Allocate wifi");
     let mut wifi = EspWifi::new(peripherals.modem, sysloop.clone(), Some(nvs))?;
     let wifi_ssid = WIFI_SSID.unwrap_or("Wokwi-GUEST");
     let wifi_pass = WIFI_PASS.unwrap_or("");
 
-    let mut ws2812 = Ws2812Esp32Rmt::new(0, 6)?;
+    log::info!("LED setup");
+    let mut ws2812 = Ws2812Esp32Rmt::new(0, LED_GPIO)?;
+    log::info!("LED boot debug lights");
     debug_lights(&mut ws2812, 1)?;
 
     match connect_wifi(&mut ws2812, &mut wifi, wifi_ssid, wifi_pass) {
