@@ -3,7 +3,7 @@ use esp_idf_svc::{
     hal::{delay::FreeRtos, peripherals::Peripherals},
     ipv4::Ipv4Addr,
     nvs::EspDefaultNvsPartition,
-    wifi::{AuthMethod, EspWifi},
+    wifi::{AuthMethod, BlockingWifi, EspWifi},
 };
 use smart_leds::SmartLedsWrite;
 use smart_leds::RGB;
@@ -14,8 +14,8 @@ const WIFI_SSID: Option<&str> = std::option_env!("WIFI_SSID");
 const WIFI_PASS: Option<&str> = std::option_env!("WIFI_PASS");
 const PING_HOST: Option<&str> = std::option_env!("PING_HOST");
 const MAX_HEALTHY_DURATION: Duration = Duration::from_millis(200);
-const LED_STRIP_DURATION: Duration = Duration::from_secs(16 * 60);
-const LED_COUNT: u32 = 16;
+const LED_STRIP_DURATION: Duration = Duration::from_secs(30 * 60);
+const LED_COUNT: u32 = 24;
 const RESTART_SECONDS: u32 = 3;
 const LED_GPIO: u32 = 6; // 6 for C3 mini, wokwi, esp32-c3-devkit-rust-1; 13 for ESP-WROOM-32
 
@@ -36,7 +36,10 @@ fn main() -> anyhow::Result<()> {
     let nvs = EspDefaultNvsPartition::take()?;
 
     log::info!("Allocate wifi");
-    let mut wifi = EspWifi::new(peripherals.modem, sysloop.clone(), Some(nvs))?;
+    let mut wifi = BlockingWifi::wrap(
+        EspWifi::new(peripherals.modem, sysloop.clone(), Some(nvs))?,
+        sysloop,
+    )?;
     let wifi_ssid = WIFI_SSID.unwrap_or("Wokwi-GUEST");
     let wifi_pass = WIFI_PASS.unwrap_or("");
 
@@ -57,7 +60,7 @@ fn main() -> anyhow::Result<()> {
     let ping_host = if PING_HOST.is_some() {
         PING_HOST.unwrap().parse::<Ipv4Addr>()?
     } else {
-        wifi.sta_netif().get_ip_info()?.subnet.gateway
+        wifi.wifi().sta_netif().get_ip_info()?.subnet.gateway
     };
     match main_loop(ping_host, ws2812) {
         Ok(_) => unreachable!(),
@@ -73,9 +76,9 @@ fn main() -> anyhow::Result<()> {
 fn debug_lights(ws2812: &mut Ws2812Esp32Rmt, stage: u32) -> anyhow::Result<()> {
     ws2812.write((0..LED_COUNT).map(|n| {
         if n < stage {
-            RGB::new(255, 105, 180)
+            RGB::new(100, 50, 75)
         } else {
-            RGB::new(0, 0, 200)
+            RGB::new(0, 0, 50)
         }
     }))?;
     Ok(())
@@ -83,7 +86,7 @@ fn debug_lights(ws2812: &mut Ws2812Esp32Rmt, stage: u32) -> anyhow::Result<()> {
 
 fn connect_wifi(
     ws2812: &mut Ws2812Esp32Rmt,
-    wifi: &mut EspWifi<'static>,
+    wifi: &mut BlockingWifi<EspWifi<'static>>,
     ssid: &str,
     password: &str,
 ) -> anyhow::Result<()> {
@@ -101,27 +104,25 @@ fn connect_wifi(
         });
     wifi.set_configuration(&wifi_configuration)?;
 
-    wifi.connect()?;
-    log::info!("Waiting for station {:?}", wifi.get_configuration()?);
+    log::info!("Connecting...");
     debug_lights(ws2812, 3)?;
-    while !wifi.is_connected()? {
-        FreeRtos::delay_ms(1000);
-    }
-    log::info!("Got station {:?}", wifi.get_configuration()?);
+    wifi.connect()?;
 
-    log::info!("Waiting for IP");
+    log::info!("Waiting for DHCP...");
     debug_lights(ws2812, 4)?;
-    while wifi.sta_netif().get_ip_info()?.ip.is_unspecified() {
-        FreeRtos::delay_ms(1000);
-    }
-    log::info!("IP info: {:?}", wifi.sta_netif().get_ip_info()?);
+    wifi.wait_netif_up()?;
 
+    log::info!("Print DHCP info...");
     debug_lights(ws2812, 5)?;
+    let ip_info = wifi.wifi().sta_netif().get_ip_info()?;
+    log::info!("Wifi DHCP info: {:?}", ip_info);
+
+    debug_lights(ws2812, 6)?;
     Ok(())
 }
 
 fn scan_wifi(
-    wifi: &mut EspWifi<'static>,
+    wifi: &mut BlockingWifi<EspWifi<'static>>,
     ssid: &str,
     password: &str,
 ) -> anyhow::Result<AuthMethod> {
@@ -207,17 +208,19 @@ fn ping(host: Ipv4Addr) -> anyhow::Result<Option<Duration>> {
 /// An RGB<u8> value representing the converted color.
 fn ms2rgb(sample: Option<Duration>, max: Duration) -> RGB<u8> {
     let max = max.as_millis() as u32;
+    let brightness = 127;
     match sample {
-        None => RGB::new(255, 0, 0),
+        None => RGB::new(brightness, 0, 0),
         Some(d) => {
             let ms = d.as_millis() as u32;
             if ms <= 1 {
-                RGB::new(0, 255, 0)
+                RGB::new(0, brightness, 0)
             } else if ms > max {
-                RGB::new(127, 0, 0)
+                RGB::new(brightness / 2, 0, 0)
             } else {
-                let r = (f64::log10(ms as f64) * (255.0 / f64::log10(max as f64))) as u8;
-                RGB::new(r, 255, 0)
+                let r =
+                    (f64::log10(ms as f64) * (brightness as f64 / f64::log10(max as f64))) as u8;
+                RGB::new(r, brightness, 0)
             }
         }
     }
