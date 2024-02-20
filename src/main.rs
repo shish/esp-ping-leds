@@ -5,6 +5,7 @@ use esp_idf_svc::{
     nvs::EspDefaultNvsPartition,
     wifi::{AuthMethod, BlockingWifi, EspWifi},
 };
+use smart_leds::hsv::{hsv2rgb, Hsv};
 use smart_leds::SmartLedsWrite;
 use smart_leds::RGB;
 use std::{collections::VecDeque, time::Duration};
@@ -13,15 +14,16 @@ use ws2812_esp32_rmt_driver::Ws2812Esp32Rmt;
 const WIFI_SSID: Option<&str> = std::option_env!("WIFI_SSID");
 const WIFI_PASS: Option<&str> = std::option_env!("WIFI_PASS");
 const PING_HOST: Option<&str> = std::option_env!("PING_HOST");
-const MAX_HEALTHY_DURATION: Duration = Duration::from_millis(200);
+const MAX_HEALTHY_DURATION: Duration = Duration::from_millis(100);
 const LED_STRIP_DURATION: Duration = Duration::from_secs(30 * 60);
 const LED_COUNT: u32 = 24;
 const RESTART_SECONDS: u32 = 3;
 const LED_GPIO: u32 = 6; // 6 for C3 mini, wokwi, esp32-c3-devkit-rust-1; 13 for ESP-WROOM-32
 
 fn main() -> anyhow::Result<()> {
-    // It is necessary to call this function once. Otherwise some patches to the runtime
-    // implemented by esp-idf-sys might not link properly. See https://github.com/esp-rs/esp-idf-template/issues/71
+    // It is necessary to call this function once. Otherwise some patches
+    // to the runtime implemented by esp-idf-sys might not link properly.
+    // See https://github.com/esp-rs/esp-idf-template/issues/71
     esp_idf_svc::sys::link_patches();
 
     // Bind the log crate to the ESP Logging facilities
@@ -209,21 +211,35 @@ fn ping(host: Ipv4Addr) -> anyhow::Result<Option<Duration>> {
 fn ms2rgb(sample: Option<Duration>, max: Duration) -> RGB<u8> {
     let max = max.as_millis() as u32;
     let brightness = 127;
-    match sample {
-        None => RGB::new(brightness, 0, 0),
+    let hsv = match sample {
+        // offline: dark blue
+        None => Hsv {
+            hue: 170,
+            sat: 255,
+            val: brightness / 2,
+        },
         Some(d) => {
             let ms = d.as_millis() as u32;
-            if ms <= 1 {
-                RGB::new(0, brightness, 0)
-            } else if ms > max {
-                RGB::new(brightness / 2, 0, 0)
-            } else {
-                let r =
-                    (f64::log10(ms as f64) * (brightness as f64 / f64::log10(max as f64))) as u8;
-                RGB::new(r, brightness, 0)
+            // >max: magenta
+            if ms > max {
+                Hsv {
+                    hue: 210,
+                    sat: 255,
+                    val: brightness / 2,
+                }
+            }
+            // 0-max: spectrum green(80)-yellow(40)-red(0)
+            else {
+                let frac = 1.0 - (ms as f32 / max as f32);
+                Hsv {
+                    hue: (80.0 * frac) as u8,
+                    sat: 255,
+                    val: brightness / 2,
+                }
             }
         }
-    }
+    };
+    return hsv2rgb(hsv);
 }
 
 #[cfg(test)]
