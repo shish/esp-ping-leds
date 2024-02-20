@@ -239,7 +239,8 @@ fn ms2rgb(sample: Option<Duration>, max: Duration) -> RGB<u8> {
             }
         }
     };
-    return hsv2rgb(hsv);
+
+    hsv2rgb(hsv)
 }
 
 #[cfg(test)]
