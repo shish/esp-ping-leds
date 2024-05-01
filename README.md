@@ -2,6 +2,8 @@ What:
 =====
 A lil' esp32 project to monitor my internet connection and teach myself embedded rust
 
+Every minute, it pings a given IP address, and lights up one LED on a scale of green-to-red based on how long the ping was (with dark blue for "no data yet" and purple for "packet lost")
+
 ![Wooden V1](./.github/images/wooden.jpeg?raw=true)
 ![LEDs](./.github/images/leds.jpeg?raw=true)
 ![Glow](./.github/images/glow.jpeg?raw=true)
