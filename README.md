@@ -2,9 +2,9 @@ What:
 =====
 A lil' esp32 project to monitor my internet connection and teach myself embedded rust
 
-![Wooden V1](./.github/images/wooden.jpg?raw=true)
-![LEDs](./.github/images/leds.jpg?raw=true)
-![Glow](./.github/images/glow.jpg?raw=true)
+![Wooden V1](./.github/images/wooden.jpeg?raw=true)
+![LEDs](./.github/images/leds.jpeg?raw=true)
+![Glow](./.github/images/glow.jpeg?raw=true)
 
 
 Build:
