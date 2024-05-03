@@ -10,35 +10,44 @@
       "ESP_BOARD": "esp32c3"
     }
   },
-  "settings": {
-    "editor.formatOnPaste": true,
-    "editor.formatOnSave": true,
-    "editor.formatOnSaveMode": "file",
-    "editor.formatOnType": true,
-    "lldb.executable": "/usr/bin/lldb",
-    "files.watcherExclude": {
-      "**/target/**": true
-    },
-    "rust-analyzer.checkOnSave.command": "clippy",
-    "rust-analyzer.checkOnSave.allTargets": false,
-    "[rust]": {
-      "editor.defaultFormatter": "rust-lang.rust-analyzer"
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "editor.formatOnPaste": true,
+        "editor.formatOnSave": true,
+        "editor.formatOnSaveMode": "file",
+        "editor.formatOnType": true,
+        "lldb.executable": "/usr/bin/lldb",
+        "files.watcherExclude": {
+          "**/target/**": true
+        },
+        "rust-analyzer.checkOnSave.command": "clippy",
+        "rust-analyzer.checkOnSave.allTargets": false,
+        "[rust]": {
+          "editor.defaultFormatter": "rust-lang.rust-analyzer"
+        }
+      },
+      "extensions": [
+        "rust-lang.rust-analyzer",
+        "tamasfe.even-better-toml",
+        "serayuzgur.crates",
+        "mutantdino.resourcemonitor",
+        "yzhang.markdown-all-in-one",
+        "ms-vscode.cpptools",
+        "actboy168.tasks",
+        "Wokwi.wokwi-vscode",
+        "ms-azuretools.vscode-docker"
+      ]
     }
   },
-  "extensions": [
-    "rust-lang.rust-analyzer",
-    "tamasfe.even-better-toml",
-    "serayuzgur.crates",
-    "mutantdino.resourcemonitor",
-    "yzhang.markdown-all-in-one",
-    "ms-vscode.cpptools",
-    "actboy168.tasks",
-    "Wokwi.wokwi-vscode"
-  ],
   "forwardPorts": [
     3333,
     8000
   ],
   "workspaceMount": "source=${localWorkspaceFolder},target=/home/esp/esp_ping_leds,type=bind,consistency=cached",
-  "workspaceFolder": "/home/esp/esp_ping_leds"
+  "workspaceFolder": "/home/esp/esp_ping_leds",
+  "mounts": [
+    "source=${localWorkspaceFolderBasename}-embuild,target=${localWorkspaceFolder}/.embuild,type=volume"
+  ],
+  "postCreateCommand": "sudo chown esp ${localWorkspaceFolder}/.embuild",
 }
