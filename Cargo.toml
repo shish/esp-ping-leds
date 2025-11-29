@@ -1,29 +1,29 @@
 [package]
 name = "esp-ping-leds"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Shish <shish@shishnet.org>"]
 edition = "2021"
 resolver = "2"
-rust-version = "1.71"
+rust-version = "1.77"
+
+[[bin]]
+name = "esp-ping-leds"
+harness = false # do not use the built-in cargo test harness -> resolve rust-analyzer errors
 
 [profile.release]
 opt-level = "s"
 
 [profile.dev]
-debug = true    # Symbols are nice and they don't increase the size on Flash
+debug = true    # Symbols are nice, and they don't increase the size on Flash
 opt-level = "z"
 
 [features]
-default = ["std", "esp-idf-svc/native", "esp-idf-svc/binstart"]
+default = []
 
-pio = ["esp-idf-svc/pio"]
-std = ["alloc", "esp-idf-svc/binstart", "esp-idf-svc/std"]
-alloc = ["esp-idf-svc/alloc"]
-nightly = ["esp-idf-svc/nightly"]
 experimental = ["esp-idf-svc/experimental"]
 
 [dependencies]
-log = { version = "0.4", default-features = false }
+log = "0.4"
 esp-idf-svc = "0.51"
 anyhow = "1.0"
 smart-leds = "0.4"
@@ -31,4 +31,4 @@ ws2812-esp32-rmt-driver = { version = "0.13", features = ["smart-leds-trait"] }
 heapless = "0.8.0"
 
 [build-dependencies]
-embuild = "0.33.1"
+embuild = "0.33"
