@@ -1,11 +1,13 @@
-FROM debian:bookworm
+FROM debian:trixie
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8
 
 # Install dependencies
 RUN apt-get update && apt-get install -y sudo git curl build-essential \
-    python3 python3-venv python3-packaging python3-pip libclang1 clang \
+    pkg-config libssl-dev \
+    python3 python3-venv python3-packaging python3-pip \
+    libclang1 clang \
     && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
 # Add users

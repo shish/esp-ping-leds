@@ -18,7 +18,6 @@ const MAX_HEALTHY_DURATION: Duration = Duration::from_millis(100);
 const LED_STRIP_DURATION: Duration = Duration::from_secs(30 * 60);
 const LED_COUNT: u32 = 24;
 const RESTART_SECONDS: u32 = 3;
-const LED_GPIO: u32 = 6; // 6 for C3 mini, wokwi, esp32-c3-devkit-rust-1; 13 for ESP-WROOM-32
 
 fn main() -> anyhow::Result<()> {
     // It is necessary to call this function once. Otherwise some patches
@@ -46,7 +45,9 @@ fn main() -> anyhow::Result<()> {
     let wifi_pass = WIFI_PASS.unwrap_or("");
 
     log::info!("LED setup");
-    let mut ws2812 = Ws2812Esp32Rmt::new(0, LED_GPIO)?;
+    // gpio6 for C3 mini, wokwi, esp32-c3-devkit-rust-1
+    // gpio13 for ESP-WROOM-32
+    let mut ws2812 = Ws2812Esp32Rmt::new(peripherals.rmt.channel0, peripherals.pins.gpio6)?;
     log::info!("LED boot debug lights");
     debug_lights(&mut ws2812, 1)?;
 
@@ -99,9 +100,9 @@ fn connect_wifi(
     let auth_method = scan_wifi(wifi, ssid, password)?;
     let wifi_configuration =
         esp_idf_svc::wifi::Configuration::Client(esp_idf_svc::wifi::ClientConfiguration {
-            ssid: ssid.into(),
+            ssid: heapless::String::<32>::try_from(ssid).unwrap(),
             auth_method,
-            password: password.into(),
+            password: heapless::String::<64>::try_from(password).unwrap(),
             ..Default::default()
         });
     wifi.set_configuration(&wifi_configuration)?;
@@ -144,8 +145,17 @@ fn scan_wifi(
             });
             let ours = aps.into_iter().find(|a| a.ssid == ssid);
             if let Some(ours) = ours {
-                log::debug!("Found AP {} on channel {}", ssid, ours.channel);
-                Ok(ours.auth_method)
+                if let Some(auth_method) = ours.auth_method {
+                    log::info!(
+                        "Found configured AP {} with auth method {:?}",
+                        ssid,
+                        auth_method
+                    );
+                    Ok(auth_method)
+                } else {
+                    log::info!("Found configured AP {} with unknown auth method", ssid);
+                    Ok(guessed_auth)
+                }
             } else {
                 log::debug!("Configured AP {} not found", ssid);
                 Ok(guessed_auth)

@@ -11,8 +11,7 @@ Every minute, it pings a given IP address, and lights up one LED on a scale of g
 
 Build:
 ======
-Getting the esp toolchain running on an M1 mac was hours of hassle before I
-gave up, but devcontainers seem to work \o/
+Getting the esp toolchain running on an M1 mac was hours of hassle before I gave up, but devcontainers seem to work \o/
 
 Once the devcontainer is opened:
 
