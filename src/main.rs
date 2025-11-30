@@ -255,9 +255,9 @@ fn ms2rgb(sample: Option<Duration>, max: Duration) -> RGB<u8> {
 
 #[cfg(test)]
 mod test_ms2rgb {
-    use super::*;
+    //use super::*;
 
-    const TEST_MAX: Duration = Duration::from_millis(100);
+    //const TEST_MAX: Duration = Duration::from_millis(100);
 
     #[test]
     fn timeout_returns_red() {
