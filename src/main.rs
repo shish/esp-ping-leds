@@ -120,7 +120,11 @@ fn main_loop(ping_host: Ipv4Addr, mut ws2812: Ws2812Esp32Rmt) -> anyhow::Result<
         let pixels = samples
             .clone()
             .into_iter()
-            .map(|ms| rgb::ms2rgb(ms, MAX_HEALTHY_DURATION, BRIGHTNESS));
+            .map(|ms| rgb::ms2rgb(ms, MAX_HEALTHY_DURATION, BRIGHTNESS))
+            .chain(
+                std::iter::repeat(smart_leds::RGB8::new(0, 0, BRIGHTNESS / 4))
+                    .take(LED_COUNT as usize - samples.len()),
+            );
         ws2812.write(pixels)?;
         FreeRtos::delay_ms(time_per_led.as_millis() as u32);
     }
