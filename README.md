@@ -18,4 +18,4 @@ Once the devcontainer is opened:
 * `cargo build` to build a binary with default settings that work for a simulator
 * `F1 -> Wokwi: Start Simulator` to start the binary in a simulator
 * `WIFI_SSID=Foo WIFI_PASS=Bar PING_HOST=1.1.1.1 cargo build` to do a build with wifi credentials and a specific host to ping (by default it will ping the local gateway)
-* `espflash flash --monitor target/riscv32imc-esp-espidf/debug/esp-ping-leds --port /dev/cu.usbmodem101` to flash to a device (port depends on what board is being used - if that port doesn't work for you, drop the flag and espflash will scan to find all available ports)
+* `espflash flash --monitor target/riscv32imc-esp-espidf/debug/esp-ping-leds` to flash to a device

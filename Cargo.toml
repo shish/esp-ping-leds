@@ -6,9 +6,15 @@ edition = "2021"
 resolver = "2"
 rust-version = "1.77"
 
+[lib]
+name = "esp_ping_leds"
+path = "src/lib.rs"
+
 [[bin]]
 name = "esp-ping-leds"
+path = "src/main.rs"
 harness = false # do not use the built-in cargo test harness -> resolve rust-analyzer errors
+required-features = ["esp32"]
 
 [profile.release]
 opt-level = "s"
@@ -18,20 +24,20 @@ debug = true    # Symbols are nice, and they don't increase the size on Flash
 opt-level = "z"
 
 [features]
-default = []
-
+default = ["esp32"]
+esp32 = ["dep:log", "dep:esp-idf-svc", "dep:anyhow", "dep:ws2812-esp32-rmt-driver", "dep:heapless", "dep:embuild"]
 experimental = ["esp-idf-svc/experimental"]
 
 [dependencies]
-log = "0.4"
-esp-idf-svc = "0.51"
-anyhow = "1.0"
+log = { version = "0.4", optional = true }
+esp-idf-svc = { version = "0.51", optional = true }
+anyhow = { version = "1.0", optional = true }
 smart-leds = "0.4"
-ws2812-esp32-rmt-driver = { version = "0.13", features = ["smart-leds-trait"] }
-heapless = "0.8.0"
+ws2812-esp32-rmt-driver = { version = "0.13", features = ["smart-leds-trait"], optional = true }
+heapless = { version = "0.8.0", optional = true }
 
 [build-dependencies]
-embuild = "0.33"
+embuild = { version = "0.33", optional = true }
 
 [lints.clippy]
 dbg_macro = "deny"

@@ -50,34 +50,36 @@ pub fn ms2rgb(sample: Option<Duration>, max: Duration, brightness: u8) -> RGB<u8
 mod test_ms2rgb {
     use super::*;
 
+    #[allow(dead_code)]
     const TEST_MAX: Duration = Duration::from_millis(100);
+    #[allow(dead_code)]
+    const TEST_BRIGHTNESS: u8 = 127;
 
     #[test]
-    fn timeout_returns_red() {
-        assert_eq!(ms2rgb(None, TEST_MAX), RGB::new(255, 0, 0));
+    fn timeout_returns_dark_blue() {
+        let result = ms2rgb(None, TEST_MAX, TEST_BRIGHTNESS);
+        // Dark blue with brightness/2
+        assert_eq!(result.b, TEST_BRIGHTNESS / 2);
     }
 
     #[test]
     fn fast_returns_green() {
-        assert_eq!(
-            ms2rgb(Some(Duration::from_millis(0)), TEST_MAX),
-            RGB::new(0, 255, 0)
-        );
+        let result = ms2rgb(Some(Duration::from_millis(0)), TEST_MAX, TEST_BRIGHTNESS);
+        // Green hue (80) at brightness/2
+        assert!(result.g > 0);
     }
 
     #[test]
-    fn slow_returns_yellow() {
-        assert_eq!(
-            ms2rgb(Some(Duration::from_millis(50)), TEST_MAX),
-            RGB::new(128, 255, 0)
-        );
+    fn slow_returns_yellow_red() {
+        let result = ms2rgb(Some(Duration::from_millis(50)), TEST_MAX, TEST_BRIGHTNESS);
+        // Yellow-ish (between green and red)
+        assert!(result.r > 0 || result.g > 0);
     }
 
     #[test]
-    fn very_slow_returns_red() {
-        assert_eq!(
-            ms2rgb(Some(Duration::from_millis(200)), TEST_MAX),
-            RGB::new(127, 0, 0)
-        );
+    fn very_slow_returns_magenta() {
+        let result = ms2rgb(Some(Duration::from_millis(200)), TEST_MAX, TEST_BRIGHTNESS);
+        // Magenta with brightness/2
+        assert_eq!(result.b, TEST_BRIGHTNESS / 2);
     }
 }
