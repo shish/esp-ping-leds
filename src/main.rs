@@ -13,6 +13,16 @@ use smart_leds::RGB;
 use std::{collections::VecDeque, time::Duration};
 use ws2812_esp32_rmt_driver::Ws2812Esp32Rmt;
 
+#[derive(Debug, Clone, Copy)]
+pub enum BootStage {
+    Startup = 1,
+    WifiStarting = 2,
+    WifiConnecting = 3,
+    WifiDhcp = 4,
+    WifiPrintInfo = 5,
+    WifiComplete = 6,
+}
+
 const WIFI_SSID: Option<&str> = std::option_env!("WIFI_SSID");
 const WIFI_PASS: Option<&str> = std::option_env!("WIFI_PASS");
 const PING_HOST: Option<&str> = std::option_env!("PING_HOST");
@@ -51,7 +61,7 @@ fn main() -> anyhow::Result<()> {
     // gpio13 for ESP-WROOM-32
     let mut ws2812 = Ws2812Esp32Rmt::new(peripherals.rmt.channel0, peripherals.pins.gpio6)?;
     log::info!("LED boot debug lights");
-    debug_lights(&mut ws2812, 1)?;
+    debug_lights(&mut ws2812, BootStage::Startup)?;
 
     match network::connect_wifi(&mut ws2812, &mut wifi, wifi_ssid, wifi_pass) {
         Ok(_) => log::info!("Wifi ok"),
@@ -78,9 +88,10 @@ fn main() -> anyhow::Result<()> {
     }
 }
 
-pub fn debug_lights(ws2812: &mut Ws2812Esp32Rmt, stage: u32) -> anyhow::Result<()> {
+pub fn debug_lights(ws2812: &mut Ws2812Esp32Rmt, stage: BootStage) -> anyhow::Result<()> {
+    let stage_num = stage as u32;
     ws2812.write((0..LED_COUNT).map(|n| {
-        if n < stage {
+        if n < stage_num {
             RGB::new(100, 50, 75)
         } else {
             RGB::new(0, 0, 50)

@@ -5,7 +5,7 @@ use esp_idf_svc::{
 use std::time::Duration;
 use ws2812_esp32_rmt_driver::Ws2812Esp32Rmt;
 
-use crate::debug_lights;
+use crate::{debug_lights, BootStage};
 
 pub fn connect_wifi(
     ws2812: &mut Ws2812Esp32Rmt,
@@ -14,7 +14,7 @@ pub fn connect_wifi(
     password: &str,
 ) -> anyhow::Result<()> {
     log::info!("Wifi starting, target: {}...", ssid);
-    debug_lights(ws2812, 2)?;
+    debug_lights(ws2812, BootStage::WifiStarting)?;
     wifi.start()?;
 
     let auth_method = scan_wifi(wifi, ssid, password)?;
@@ -28,19 +28,19 @@ pub fn connect_wifi(
     wifi.set_configuration(&wifi_configuration)?;
 
     log::info!("Connecting...");
-    debug_lights(ws2812, 3)?;
+    debug_lights(ws2812, BootStage::WifiConnecting)?;
     wifi.connect()?;
 
     log::info!("Waiting for DHCP...");
-    debug_lights(ws2812, 4)?;
+    debug_lights(ws2812, BootStage::WifiDhcp)?;
     wifi.wait_netif_up()?;
 
     log::info!("Print DHCP info...");
-    debug_lights(ws2812, 5)?;
+    debug_lights(ws2812, BootStage::WifiPrintInfo)?;
     let ip_info = wifi.wifi().sta_netif().get_ip_info()?;
     log::info!("Wifi DHCP info: {:?}", ip_info);
 
-    debug_lights(ws2812, 6)?;
+    debug_lights(ws2812, BootStage::WifiComplete)?;
     Ok(())
 }
 
