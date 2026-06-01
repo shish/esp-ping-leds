@@ -30,6 +30,7 @@ const MAX_HEALTHY_DURATION: Duration = Duration::from_millis(100);
 const LED_STRIP_DURATION: Duration = Duration::from_secs(30 * 60);
 const LED_COUNT: u32 = 24;
 const RESTART_SECONDS: u32 = 3;
+const BRIGHTNESS: u8 = 127;
 
 fn main() -> anyhow::Result<()> {
     // It is necessary to call this function once. Otherwise some patches
@@ -119,7 +120,7 @@ fn main_loop(ping_host: Ipv4Addr, mut ws2812: Ws2812Esp32Rmt) -> anyhow::Result<
         let pixels = samples
             .clone()
             .into_iter()
-            .map(|ms| rgb::ms2rgb(ms, MAX_HEALTHY_DURATION));
+            .map(|ms| rgb::ms2rgb(ms, MAX_HEALTHY_DURATION, BRIGHTNESS));
         ws2812.write(pixels)?;
         FreeRtos::delay_ms(time_per_led.as_millis() as u32);
     }

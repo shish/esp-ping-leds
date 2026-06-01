@@ -12,9 +12,8 @@ use std::time::Duration;
 /// # Returns
 ///
 /// An RGB<u8> value representing the converted color.
-pub fn ms2rgb(sample: Option<Duration>, max: Duration) -> RGB<u8> {
+pub fn ms2rgb(sample: Option<Duration>, max: Duration, brightness: u8) -> RGB<u8> {
     let max = max.as_millis() as u32;
-    let brightness = 127;
     let hsv = match sample {
         // offline: dark blue
         None => Hsv {
