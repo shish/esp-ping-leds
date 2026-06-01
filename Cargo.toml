@@ -32,3 +32,8 @@ heapless = "0.8.0"
 
 [build-dependencies]
 embuild = "0.33"
+
+[lints.clippy]
+dbg_macro = "deny"
+unwrap_used = "deny"
+expect_used = "deny"
