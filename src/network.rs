@@ -1,4 +1,5 @@
 use esp_idf_svc::{
+    handle::RawHandle,
     ipv4::Ipv4Addr,
     wifi::{AuthMethod, BlockingWifi, EspWifi},
 };
@@ -15,6 +16,17 @@ pub fn connect_wifi(
 ) -> anyhow::Result<()> {
     log::info!("Wifi starting, target: {}...", ssid);
     debug_lights(ws2812, BootStage::WifiStarting)?;
+
+    // Set hostname before starting wifi
+    log::info!("Setting hostname to ping-leds");
+    unsafe {
+        let hostname = std::ffi::CString::new("ping-leds").unwrap();
+        esp_idf_svc::sys::esp_netif_set_hostname(
+            wifi.wifi().sta_netif().handle(),
+            hostname.as_ptr(),
+        );
+    }
+
     wifi.start()?;
 
     let auth_method = scan_wifi(wifi, ssid, password)?;
