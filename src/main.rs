@@ -106,10 +106,6 @@ fn main_loop(ping_host: Ipv4Addr, mut ws2812: Ws2812Esp32Rmt) -> anyhow::Result<
     let time_per_led = LED_STRIP_DURATION / LED_COUNT;
     let mut samples: VecDeque<Option<Duration>> = VecDeque::with_capacity((LED_COUNT + 1) as usize);
     loop {
-        // let sample = Some(Duration::from_millis(42));
-        // let sample = Some(Duration::from_millis(
-        //     unsafe { esp_idf_sys::esp_random() % 250 } as u64,
-        // ));
         let sample = network::ping(ping_host, MAX_HEALTHY_DURATION * 5)?;
         log::info!("Sample: {:?}", sample);
 
