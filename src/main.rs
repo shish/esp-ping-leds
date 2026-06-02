@@ -89,6 +89,7 @@ fn main() -> anyhow::Result<()> {
 
     log::info!("Creating config...");
     let config = Config::new_shared(
+        Duration::from_millis(10),    // min_healthy_duration
         Duration::from_millis(100),   // max_healthy_duration
         127,                          // led_brightness
         true,                         // led_enabled
@@ -129,11 +130,20 @@ fn main_loop(config: Arc<Mutex<Config>>, mut ws2812: Ws2812Esp32Rmt) -> anyhow::
 
     loop {
         // Read config values for this iteration
-        let (ping_host, max_healthy_duration, led_brightness, led_enabled, led_count, time_per_led) = {
+        let (
+            ping_host,
+            min_healthy_duration,
+            max_healthy_duration,
+            led_brightness,
+            led_enabled,
+            led_count,
+            time_per_led,
+        ) = {
             let cfg = config.lock().unwrap();
             let time_per_led = cfg.led_strip_duration / cfg.led_count;
             (
                 cfg.ping_host.clone(),
+                cfg.min_healthy_duration,
                 cfg.max_healthy_duration,
                 cfg.led_brightness,
                 cfg.led_enabled,
@@ -159,7 +169,14 @@ fn main_loop(config: Arc<Mutex<Config>>, mut ws2812: Ws2812Esp32Rmt) -> anyhow::
             samples
                 .clone()
                 .into_iter()
-                .map(|ms| rgb::ms2rgb(ms, max_healthy_duration, led_brightness))
+                .map(|ms| {
+                    rgb::ms2rgb(
+                        ms,
+                        min_healthy_duration,
+                        max_healthy_duration,
+                        led_brightness,
+                    )
+                })
                 .chain(
                     std::iter::repeat(smart_leds::RGB8::new(0, 0, led_brightness / 4))
                         .take(led_count as usize - samples.len()),
