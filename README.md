@@ -28,3 +28,16 @@ Environment variables (set at compile time):
 * `WIFI_SSID` - WiFi network name (default: "Wokwi-GUEST")
 * `WIFI_PASS` - WiFi password (default: "")
 * `PING_HOST` - IP address to ping (default: gateway IP)
+* `MQTT_URL` - MQTT broker URL (optional, disables MQTT if not set)
+  - Format: `mqtt://[username:password@]host[:port]`
+  - Examples:
+    - `mqtt://homeassistant.local` (no auth, default port 1883)
+    - `mqtt://mqtt:secret@homeassistant.local:1883` (with auth)
+    - `mqtt://user:pass@192.168.1.100:8883` (custom port)
+
+Example build with MQTT enabled:
+```bash
+MQTT_URL=mqtt://mqtt:secret@homeassistant.local \
+WIFI_SSID=MyWiFi WIFI_PASS=MyPassword PING_HOST=1.1.1.1 \
+cargo build
+```

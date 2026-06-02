@@ -1,4 +1,5 @@
 mod config;
+mod mqtt;
 mod network;
 mod rgb;
 
@@ -98,7 +99,27 @@ fn main() -> anyhow::Result<()> {
         24,                           // led_count
     );
 
-    match main_loop(config, ws2812) {
+    log::info!("Starting MQTT manager...");
+    // Get MAC address from wifi interface
+    let mac_address = wifi.wifi().sta_netif().get_mac()?;
+    log::info!(
+        "MAC Address: {:02x}:{:02x}:{:02x}:{:02x}:{:02x}:{:02x}",
+        mac_address[0],
+        mac_address[1],
+        mac_address[2],
+        mac_address[3],
+        mac_address[4],
+        mac_address[5]
+    );
+    let mqtt = match mqtt::MqttManager::new(Arc::clone(&config), mac_address) {
+        Ok(m) => m,
+        Err(e) => {
+            log::error!("Failed to start MQTT manager: {}", e);
+            None
+        }
+    };
+
+    match main_loop(config, ws2812, mqtt) {
         Ok(_) => unreachable!(),
         Err(e) => {
             log::error!("Major Error: {}", e);
@@ -122,7 +143,11 @@ pub fn debug_lights(ws2812: &mut Ws2812Esp32Rmt, stage: BootStage) -> anyhow::Re
     Ok(())
 }
 
-fn main_loop(config: Arc<Mutex<Config>>, mut ws2812: Ws2812Esp32Rmt) -> anyhow::Result<()> {
+fn main_loop(
+    config: Arc<Mutex<Config>>,
+    mut ws2812: Ws2812Esp32Rmt,
+    mut mqtt: Option<mqtt::MqttManager>,
+) -> anyhow::Result<()> {
     log::info!("Main loop...");
 
     let mut samples: VecDeque<Option<Duration>> = VecDeque::new();
@@ -186,6 +211,13 @@ fn main_loop(config: Arc<Mutex<Config>>, mut ws2812: Ws2812Esp32Rmt) -> anyhow::
             vec![RGB::new(0, 0, 0); led_count as usize]
         };
         ws2812.write(pixels.into_iter())?;
+
+        // Periodically publish MQTT state (every 60 iterations)
+        if let Some(ref mut mqtt_manager) = mqtt {
+            if let Err(e) = mqtt_manager.periodic_publish() {
+                log::warn!("Failed to publish MQTT state: {}", e);
+            }
+        }
 
         // Sleep until the next loop
         let loop_delay = Duration::from_secs(1);

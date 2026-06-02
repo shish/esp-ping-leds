@@ -602,6 +602,8 @@ dependencies = [
  "esp-idf-svc",
  "heapless",
  "log",
+ "serde",
+ "serde_json",
  "smart-leds",
  "ws2812-esp32-rmt-driver",
 ]
