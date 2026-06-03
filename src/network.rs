@@ -33,9 +33,9 @@ pub fn connect_wifi(
     let auth_method = scan_wifi(wifi, ssid, password)?;
     let wifi_configuration =
         esp_idf_svc::wifi::Configuration::Client(esp_idf_svc::wifi::ClientConfiguration {
-            ssid: heapless::String::<32>::try_from(ssid).expect("Wifi SSID invalid"),
+            ssid: ssid.try_into().expect("Wifi SSID invalid"),
             auth_method,
-            password: heapless::String::<64>::try_from(password).expect("Wifi password invalid"),
+            password: password.try_into().expect("Wifi password invalid"),
             ..Default::default()
         });
     wifi.set_configuration(&wifi_configuration)?;
