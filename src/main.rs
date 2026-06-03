@@ -77,8 +77,8 @@ fn main() -> anyhow::Result<()> {
             unsafe { esp_idf_svc::sys::esp_restart() };
         }
     }
-    let ping_host_str = if PING_HOST.is_some() {
-        PING_HOST.unwrap().to_string()
+    let ping_host_str = if let Some(ping_host) = PING_HOST {
+        ping_host.to_string()
     } else {
         wifi.wifi()
             .sta_netif()
@@ -164,7 +164,7 @@ fn main_loop(
             led_count,
             time_per_led,
         ) = {
-            let cfg = config.lock().unwrap();
+            let cfg = config.lock().expect("Failed to lock config for reading");
             let time_per_led = cfg.led_strip_duration / cfg.led_count;
             (
                 cfg.ping_host.clone(),
@@ -210,7 +210,7 @@ fn main_loop(
         } else {
             vec![RGB::new(0, 0, 0); led_count as usize]
         };
-        ws2812.write(pixels.into_iter())?;
+        ws2812.write(pixels)?;
 
         // Periodically publish MQTT state (every 60 iterations)
         if let Some(ref mut mqtt_manager) = mqtt {

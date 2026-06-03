@@ -44,4 +44,4 @@ embuild = { version = "0.33", optional = true }
 [lints.clippy]
 dbg_macro = "deny"
 unwrap_used = "deny"
-expect_used = "deny"
+expect_used = "allow"

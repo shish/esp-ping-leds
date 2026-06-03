@@ -34,7 +34,7 @@ impl MqttManager {
             ..Default::default()
         };
 
-        let (client, mut connection) = EspMqttClient::new(&broker_url, &mqtt_config)?;
+        let (client, mut connection) = EspMqttClient::new(broker_url, &mqtt_config)?;
 
         log::info!("MQTT client created, spawning connection handler");
 
@@ -116,21 +116,19 @@ impl MqttManager {
                 }
                 EventPayload::Received {
                     id,
-                    topic,
+                    topic: Some(topic),
                     data,
                     details: _,
                 } => {
-                    if let Some(topic_str) = topic {
-                        if let Ok(payload) = std::str::from_utf8(data) {
-                            log::info!("MQTT Received [{}] {}: {}", id, topic_str, payload);
-                            Self::handle_command(
-                                topic_str,
-                                payload,
-                                &config,
-                                &device_path,
-                                &publish_pending,
-                            );
-                        }
+                    if let Ok(payload) = std::str::from_utf8(data) {
+                        log::info!("MQTT Received [{}] {}: {}", id, topic, payload);
+                        Self::handle_command(
+                            topic,
+                            payload,
+                            &config,
+                            &device_path,
+                            &publish_pending,
+                        );
                     }
                 }
                 EventPayload::Error(err) => {
@@ -274,7 +272,10 @@ impl MqttManager {
     fn send_discovery_messages(&mut self) -> anyhow::Result<()> {
         log::info!("Sending Home Assistant discovery message");
 
-        let cfg = self.config.lock().unwrap();
+        let cfg = self
+            .config
+            .lock()
+            .expect("Failed to lock config for discovery message");
 
         // Single discovery message with all components
         let discovery_config = serde_json::json!({
@@ -405,7 +406,10 @@ impl MqttManager {
 
     /// Publish current state to MQTT
     pub fn publish_state(&mut self) -> anyhow::Result<()> {
-        let cfg = self.config.lock().unwrap();
+        let cfg = self
+            .config
+            .lock()
+            .expect("Failed to lock config for publishing state");
 
         self.client.enqueue(
             &format!("{}/light/state", self.device_path),

@@ -20,7 +20,8 @@ pub fn connect_wifi(
     // Set hostname before starting wifi
     log::info!("Setting hostname to ping-leds");
     unsafe {
-        let hostname = std::ffi::CString::new("ping-leds").unwrap();
+        let hostname = std::ffi::CString::new("ping-leds")
+            .expect("Static string should never be an invalid string");
         esp_idf_svc::sys::esp_netif_set_hostname(
             wifi.wifi().sta_netif().handle(),
             hostname.as_ptr(),
@@ -32,9 +33,9 @@ pub fn connect_wifi(
     let auth_method = scan_wifi(wifi, ssid, password)?;
     let wifi_configuration =
         esp_idf_svc::wifi::Configuration::Client(esp_idf_svc::wifi::ClientConfiguration {
-            ssid: heapless::String::<32>::try_from(ssid).unwrap(),
+            ssid: heapless::String::<32>::try_from(ssid).expect("Wifi SSID invalid"),
             auth_method,
-            password: heapless::String::<64>::try_from(password).unwrap(),
+            password: heapless::String::<64>::try_from(password).expect("Wifi password invalid"),
             ..Default::default()
         });
     wifi.set_configuration(&wifi_configuration)?;
