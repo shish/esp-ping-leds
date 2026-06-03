@@ -382,7 +382,7 @@ dependencies = [
  "embedded-io-async",
  "futures-sink",
  "futures-util",
- "heapless",
+ "heapless 0.8.0",
 ]
 
 [[package]]
@@ -454,7 +454,7 @@ dependencies = [
  "embedded-io",
  "embedded-io-async",
  "enumset",
- "heapless",
+ "heapless 0.8.0",
  "num_enum",
  "serde",
  "strum 0.25.0",
@@ -549,7 +549,7 @@ dependencies = [
  "embuild",
  "enumset",
  "esp-idf-sys",
- "heapless",
+ "heapless 0.8.0",
  "log",
  "nb 1.1.0",
  "num_enum",
@@ -568,7 +568,7 @@ dependencies = [
  "enumset",
  "esp-idf-hal",
  "futures-io",
- "heapless",
+ "heapless 0.8.0",
  "log",
  "num_enum",
  "uncased",
@@ -601,7 +601,7 @@ dependencies = [
  "anyhow",
  "embuild",
  "esp-idf-svc",
- "heapless",
+ "heapless 0.9.3",
  "log",
  "serde",
  "serde_json",
@@ -765,6 +765,16 @@ name = "heapless"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0bfb9eb618601c89945a70e254898da93b13be0388091d42117462b265bb3fad"
+dependencies = [
+ "hash32",
+ "stable_deref_trait",
+]
+
+[[package]]
+name = "heapless"
+version = "0.9.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "25ba4bd83f9415b58b4ed8dc5714c76e626a105be4646c02630ad730ad3b5aa4"
 dependencies = [
  "hash32",
  "stable_deref_trait",
@@ -1872,7 +1882,7 @@ dependencies = [
  "embuild",
  "esp-idf-hal",
  "esp-idf-sys",
- "heapless",
+ "heapless 0.8.0",
  "paste",
  "smart-leds-trait",
 ]
