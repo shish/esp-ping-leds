@@ -1,14 +1,20 @@
 version: 2
 updates:
 - package-ecosystem: github-actions
+  assignees:
+    - shish
   directory: /
   schedule:
     interval: monthly
 - package-ecosystem: cargo
+  assignees:
+    - shish
   directory: /
   schedule:
     interval: monthly
 - package-ecosystem: docker
+  assignees:
+    - shish
   directory: /.devcontainer
   schedule:
     interval: monthly
